@@ -24,6 +24,7 @@ from .local_deployment import sinfonia_runapp
 
 ALIASES = {
     "helloworld": "00000000-0000-0000-0000-000000000000",
+    "loadtest": "00000000-0000-0000-0000-000000000111"
 }
 
 
@@ -76,6 +77,7 @@ def sinfonia_tier3(
         print("Deploying... ", end="", flush=True)
         deployments = sinfonia_deploy(URL(tier1_url), application_uuid, debug, zeroconf)
         print("done")
+        print(deployments[0])
     except ConnectionError:
         print("failed to connect to sinfonia-tier1/-tier2")
         return 1
