@@ -77,7 +77,6 @@ def sinfonia_tier3(
         print("Deploying... ", end="", flush=True)
         deployments = sinfonia_deploy(URL(tier1_url), application_uuid, debug, zeroconf)
         print("done")
-        print(deployments[0])
     except ConnectionError:
         print("failed to connect to sinfonia-tier1/-tier2")
         return 1
@@ -87,6 +86,7 @@ def sinfonia_tier3(
 
     # Pick the best deployment (first returned for now...)
     deployment_data = deployments[0]
+    print(deployment_data.to_pretty_format())
 
     if qrcode is not None:
         # Add the wireguard-android specific IncludedApplications.

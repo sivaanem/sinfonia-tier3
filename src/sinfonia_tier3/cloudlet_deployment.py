@@ -14,8 +14,10 @@ from typing import Any, cast
 from uuid import UUID
 
 import importlib_resources
+import pprint
 import requests
 import yaml
+
 from attrs import define
 from openapi_core import Spec, unmarshal_response
 from openapi_core.contrib.requests import (
@@ -67,6 +69,16 @@ class CloudletDeployment:
             resp.get("DeploymentName", ""),
             resp.get("Created"),
         )
+        
+    def to_pretty_format(self) -> str:
+        return pprint.pformat({
+            "uuid": self.uuid,
+            "application_key": self.application_key,
+            "status": self.status,
+            "tunnel_config": self.tunnel_config.asdict(),
+            "deployment_name": self.deployment_name,
+            "created": self.created,
+        })
 
 
 class WireguardKeyFormatter:
