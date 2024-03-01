@@ -10,9 +10,9 @@ class MatMulUser(HttpUser):
     @task
     def matmul(self):
         self.client.post(
-            'http://10.42.0.35/api/v1/matmul',
-            data={
-                'matrix1': fake.bigmath.square_matrix(n=10),
-                'matrix2': fake.bigmath.square_matrix(n=10),
+            'http://localhost/api/v1/matmul',
+            json={
+                'matrix1': fake.bigmath.square_matrix(n=100),
+                'matrix2': fake.bigmath.square_matrix(n=100),
                 }
             )
