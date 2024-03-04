@@ -5,14 +5,15 @@ from src.loadtest import fake
 
 class MatMulUser(HttpUser):
     # Maximum request load per second
-    wait_time = constant_throughput(100)
+    wait_time = constant_throughput(40)
 
     @task
     def matmul(self):
         self.client.post(
-            'http://10.42.0.35/api/v1/matmul',
-            data={
-                'matrix1': fake.bigmath.square_matrix(n=10),
-                'matrix2': fake.bigmath.square_matrix(n=10),
+            'http://obelix30.cs.umass.edu:30080/api/v1/matmul',
+            json={
+                'matrix1': fake.bigmath.square_matrix(n=50),
+                'matrix2': fake.bigmath.square_matrix(n=50),
                 }
             )
+        
