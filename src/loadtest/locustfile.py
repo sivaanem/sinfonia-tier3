@@ -1,5 +1,6 @@
-import os
-import argparse
+from typing import Optional
+
+import toml
 
 from locust import HttpUser, task, constant_throughput
 from yarl import URL
@@ -7,13 +8,12 @@ from yarl import URL
 from src.loadtest import fake
 
 
-# MATMUL_URL: str = str(URL('http://' + env.host).with_port(env.port) / 'api' / 'v1' / 'matmul')
-MATMUL_URL = ''
+MATMUL_URL: Optional[str] = 'http://localhost:8000'
 
 
 class MatMulUser(HttpUser):
     # Maximum request load per second
-    wait_time = constant_throughput(40)
+    wait_time = constant_throughput(1)
 
     @task
     def matmul(self):
@@ -24,23 +24,14 @@ class MatMulUser(HttpUser):
                 'matrix2': fake.bigmath.square_matrix(n=50),
                 }
             )
-
-
-def parse_arguments():
-    parser = argparse.ArgumentParser(description='Description of your script.')
+        
+    def on_start(self):
+        init_resources()
+        
+        
+def init_resources():
+    config = toml.load('src/loadtest/.locust.toml')
     
-    # Add arguments
-    parser.add_argument('--host', type=str)
-    parser.add_argument('--port', type=int)
-    parser.add_argument('--tspad', type=int)
-
-    return parser.parse_args()
-
-
-def main():
-    args = parse_arguments()
-    print('hello')
-
-
-if __name__ == '__main__':
-    main()
+    global MATMUL_URL
+    MATMUL_URL = str(URL(config['host']).with_port(config['port']) / 'api' / 'v1'/ 'matmul')
+        
