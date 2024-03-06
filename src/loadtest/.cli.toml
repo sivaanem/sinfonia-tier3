@@ -24,4 +24,4 @@ users = 8
 processes = 8
 # spawn-rate = 10
 # expect-workers = 8
-run_time = "2m"
+run-time = "2m"

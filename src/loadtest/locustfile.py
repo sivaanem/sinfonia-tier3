@@ -30,8 +30,8 @@ class MatMulUser(FastHttpUser):
         self.client.post(
             _MATMUL_URL,
             json={
-                'matrix1': fake.bigmath.square_matrix(n=50),
-                'matrix2': fake.bigmath.square_matrix(n=50),
+                'matrix1': fake.bigmath.square_matrix(n=100),
+                'matrix2': fake.bigmath.square_matrix(n=100),
                 }
             )
 
