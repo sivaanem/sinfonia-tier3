@@ -20,9 +20,6 @@ class Config:
         
         # Locust configs
         self.locust = c['locust']
-        
-        # Auto-generated configs
-        self._cli_ts = int(time.time())  # Current timestamp
 
     def to_locust_args(self) -> str:
         a = []
@@ -47,7 +44,6 @@ class Config:
             f.write("# This is an auto-generated file\n")
             f.write('\n')
             toml.dump(self.cli, f)
-            f.write(f"_cli_ts = {self._cli_ts}")
 
     def _repr(self, d):
         r = ""
