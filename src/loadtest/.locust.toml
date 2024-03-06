@@ -1,7 +1,6 @@
 locustfile = "src/loadtest/locustfile.py"
-num_users = 1
 rps_per_user = [ 50,]
 run_time = "2m"
 tspad_seconds = 0
-host = "http://localhost"
-port = 8000
+host = "http://obelix30.cs.umass.edu"
+port = 30080

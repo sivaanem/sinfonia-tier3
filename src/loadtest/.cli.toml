@@ -1,6 +1,5 @@
 [cli]
 locustfile = "src/loadtest/locustfile.py"
-num_users = 1
 rps_per_user = [50]
 # num_workers = 3
 run_time = "2m"
@@ -17,9 +16,9 @@ port = 30080
 [locust]
 locustfile = "src/loadtest/locustfile.py"
 headless = true
-# expect-workers = 5
 host = "http://localhost"
-users = 1
+users = 6
 # spawn-rate = 10
 run-time = "2m"
-# processes = 4
+processes = 6
+expect-workers = 6

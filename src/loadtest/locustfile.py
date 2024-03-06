@@ -2,7 +2,7 @@ from typing import Optional
 
 import toml
 
-from locust import HttpUser, task, constant_throughput
+from locust import FastHttpUser, task, constant_throughput
 from yarl import URL
 
 from src.loadtest import fake
@@ -11,9 +11,9 @@ from src.loadtest import fake
 MATMUL_URL: Optional[str] = 'http://localhost:8000'
 
 
-class MatMulUser(HttpUser):
+class MatMulUser(FastHttpUser):
     # Maximum request load per second
-    wait_time = constant_throughput(1)
+    wait_time = constant_throughput(50)
 
     @task
     def matmul(self):
