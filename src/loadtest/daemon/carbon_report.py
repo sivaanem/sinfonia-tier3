@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import List
 
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, fields
 
 import csv
 import time
@@ -14,7 +14,7 @@ from . import daemon
 
 def job(c: CarbonReportConfig):
     fn = f"carbon-report-{c.bts_unix}.csv"
-    p = Path(c.report_path) / fn
+    fp = Path(c.report_path) / fn
     
     @dataclass(init=True)
     class _CsvFmt:
@@ -23,13 +23,18 @@ def job(c: CarbonReportConfig):
         energy_use_joules: float
         carbon_emission_gco2: float
         
+        @classmethod
+        def get_column(cls) -> List:
+            all_fields = fields(cls)
+            return [field.name for field in all_fields]
+        
         def get_row(self) -> List:
             return list(asdict(self).values())
     
     # Write column names to report file
-    with open(c.report_path, 'a') as f:
+    with open(fp, 'a') as f:
         w = csv.writer(f)
-        w.writerow(asdict(_CsvFmt()).keys())
+        w.writerow(_CsvFmt.get_column())
     
     while True:
         ct = int(time.time())
@@ -44,7 +49,7 @@ def job(c: CarbonReportConfig):
         eu = data.get('energy_use_joules', '')
         ce = data.get('carbon_emission_gco2', '')
         
-        with open(c.report_path, 'a') as f:
+        with open(fp, 'a') as f:
             w = csv.writer(f)
             w.writerow(
                 _CsvFmt(

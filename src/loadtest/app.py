@@ -35,7 +35,7 @@ def loadtest(
         return 
     
     print('\nStarting ...\n')
-    time.sleep(2)
+    time.sleep(1)
     
     # Export locust config to file
     config.export_cli_to_toml('src/loadtest/.locust.toml')
