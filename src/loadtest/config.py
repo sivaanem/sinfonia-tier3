@@ -20,6 +20,9 @@ class Config:
         
         # Locust configs
         self.locust = c['locust']
+        
+        # RPS configs
+        self.rps = c['rps']
 
     def to_locust_args(self) -> str:
         a = []
@@ -39,11 +42,15 @@ class Config:
         
         return a
     
-    def export_cli_to_toml(self, path: Path | str):
+    def export_cli_to_toml(self, path: Path | str, rps_per_user: int = 0):
         with open(path, 'w') as f:
             f.write("# This is an auto-generated file\n")
             f.write('\n')
             toml.dump(self.cli, f)
+            
+            # Extra fields
+            f.write(f"rps_per_user = {rps_per_user}\n")
+            f.write(f"num_users = {self.locust['users']}\n")
 
     def _repr(self, d):
         r = ""
@@ -52,4 +59,4 @@ class Config:
         return r[:-1]
 
     def __repr__(self):        
-        return f"CLI:\n{self._repr(self.cli)}\nLocust:\n{self._repr(self.locust)}"    
+        return f"CLI:\n{self._repr(self.cli)}\nLocust:\n{self._repr(self.locust)}\nRPS:\n{self._repr(self.rps)}"

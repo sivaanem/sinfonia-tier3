@@ -1,11 +1,11 @@
 from __future__ import annotations
 from typing import List
 
-from dataclasses import dataclass, asdict, fields
-
 import csv
+import os
 import time
 import requests
+from dataclasses import dataclass, asdict, fields
 from pathlib import Path
 from yarl import URL
 
@@ -13,8 +13,8 @@ from . import daemon
 
 
 def job(c: CarbonReportConfig):
-    fn = f"carbon-report-{c.bts_unix}.csv"
-    fp = Path(c.report_path) / fn
+    fn = f"carbon-report-{c.rps}.csv"
+    fp = Path(c.report_root_path) / fn
     
     @dataclass(init=True)
     class _CsvFmt:
@@ -66,7 +66,8 @@ def job(c: CarbonReportConfig):
 @dataclass
 class CarbonReportConfig(daemon.Config):
     bts_unix: int  # Base timestamp Unix
+    rps: int  # RPS for the current session
     sps: int  # Seconds per seconds
     interval_seconds: int  # Report interval
     carbon_url: URL | str  # Carbon data URL
-    report_path: str  # File to save carbon CSV report
+    report_root_path: str  # File to save carbon CSV report

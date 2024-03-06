@@ -1,12 +1,13 @@
 [cli]
 locustfile = "src/loadtest/locustfile.py"
-rps_per_user = [50]
-# num_workers = 3
-run_time = "2m"
 sps = 0
 carbon_report_interval_seconds = 10
 carbon_url_path = 'carbon'
-carbon_report_path = 'src/loadtest/report'
+carbon_report_root_path = 'src/loadtest/report'
+
+[rps]
+# TODO: Need to figure out how to run test on 0rps
+rps_per_users = [6.25, 12.5]
 
 [cli.local]
 service_root_url = "http://localhost:8000"
@@ -19,8 +20,8 @@ tier2_root_url = "http://10.43.223.99/api/v1"
 locustfile = "src/loadtest/locustfile.py"
 headless = true
 host = "http://localhost"
-users = 6
+users = 8
+processes = 8
 # spawn-rate = 10
-run-time = "2m"
-processes = 6
-expect-workers = 6
+# expect-workers = 8
+run_time = "2m"

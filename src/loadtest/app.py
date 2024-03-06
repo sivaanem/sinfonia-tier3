@@ -1,8 +1,10 @@
+import os
 import time
 
 import typer
 import plumbum
 from dotenv import load_dotenv
+from pathlib import Path
 from yarl import URL
 
 from loadtest.config import Config
@@ -37,11 +39,26 @@ def loadtest(
     print('\nStarting ...\n')
     time.sleep(1)
     
-    # Export locust config to file
-    config.export_cli_to_toml('src/loadtest/.locust.toml')
+    # Add base timestamp for current session
+    bts_unix = int(time.time())
+    config.cli['bts_unix'] = bts_unix
     
-    # Spawn locust command thread and pipe output to foreground
-    locust_cmd & plumbum.FG
+    # Create report folder for current session
+    report_root_path = config.cli['carbon_report_root_path']
+    session_root_path = str(Path(report_root_path) / str(bts_unix))
+    os.makedirs(session_root_path, exist_ok=False)
+    config.cli['carbon_report_root_path'] = session_root_path
+    
+    # Execute loadtest at different RPS
+    for rps_per_user in config.rps['rps_per_users']:
+        num_users = config.locust['users']
+        print(f'Running loadtest @ {rps_per_user * num_users} req/sec ...')
+        
+        # Export locust config to file
+        config.export_cli_to_toml('src/loadtest/.locust.toml', rps_per_user)
+    
+        # Spawn locust command thread and pipe output to foreground
+        locust_cmd & plumbum.FG
         
 
 if __name__ == '__main__':

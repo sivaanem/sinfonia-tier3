@@ -1,11 +1,12 @@
 # This is an auto-generated file
 
 locustfile = "src/loadtest/locustfile.py"
-rps_per_user = [ 50,]
-run_time = "2m"
 sps = 0
 carbon_report_interval_seconds = 10
 carbon_url_path = "carbon"
-carbon_report_path = "src/loadtest/report"
+carbon_report_root_path = "src/loadtest/report/12424"
 app_root_url = "http://obelix30.cs.umass.edu:30080/api/v1"
 tier2_root_url = "http://10.43.223.99/api/v1"
+bts_unix = 1709712424
+rps_per_user = 6.25
+num_users = 8
