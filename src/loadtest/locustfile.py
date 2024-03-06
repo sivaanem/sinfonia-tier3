@@ -3,6 +3,7 @@ from typing import Optional, Dict, Any
 import time
 import toml
 
+import locust.stats
 from locust import FastHttpUser, events, task, constant_throughput
 from locust.runners import WorkerRunner
 from yarl import URL
@@ -10,6 +11,9 @@ from yarl import URL
 import src.loadtest.daemon as daemon
 from src.loadtest import fake
 
+
+# locust.stats.CSV_STATS_INTERVAL_SEC = 10 # default is 1 second
+# locust.stats.CSV_STATS_FLUSH_INTERVAL_SEC = 10 # Determines how often the data is flushed to disk, default is 10 seconds
 
 _RPS_PER_USER: float = 0
 _CONFIG: Dict[str, Any] = dict()
@@ -23,7 +27,7 @@ class MatMulUser(FastHttpUser):
     # wait_time = constant_throughput(1)
     
     # Number of allowed concurrent requests
-    concurrency = 100
+    concurrency = 1000000
 
     @task
     def matmul(self):
@@ -38,7 +42,9 @@ class MatMulUser(FastHttpUser):
         
 @events.test_start.add_listener
 def on_startup(environment, **kw):
+    environment.stats.use_response_times_cache = True
     MatMulUser.wait_time = _RPS_PER_USER
+    
     init_resources()
     
     if isinstance(environment.runner, WorkerRunner):
@@ -71,6 +77,7 @@ def start_daemons():
     j = daemon.carbon_report.job
     c = daemon.carbon_report.CarbonReportConfig(
         bts_unix=_CONFIG['bts_unix'],
+        num_users=_CONFIG['num_users'],
         rps=_RPS_PER_USER * _CONFIG['num_users'],
         sps=_CONFIG['sps'],
         interval_seconds=_CONFIG['carbon_report_interval_seconds'],

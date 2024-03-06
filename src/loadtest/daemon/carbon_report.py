@@ -13,7 +13,7 @@ from . import daemon
 
 
 def job(c: CarbonReportConfig):
-    fn = f"carbon-report-{c.rps}.csv"
+    fn = f"carbon-report-{int(c.rps)}rps-{c.num_users}u.csv"
     fp = Path(c.report_root_path) / fn
     
     @dataclass(init=True)
@@ -66,6 +66,7 @@ def job(c: CarbonReportConfig):
 @dataclass
 class CarbonReportConfig(daemon.Config):
     bts_unix: int  # Base timestamp Unix
+    num_users: int  # Number of locust users
     rps: int  # RPS for the current session
     sps: int  # Seconds per seconds
     interval_seconds: int  # Report interval

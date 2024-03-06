@@ -7,7 +7,7 @@ carbon_report_root_path = 'src/loadtest/report'
 
 [rps]
 # TODO: Need to figure out how to run test on 0rps
-rps_per_users = [6.25, 12.5]
+rps_per_users = [50.0]
 
 [cli.local]
 service_root_url = "http://localhost:8000"
@@ -24,4 +24,9 @@ users = 8
 processes = 8
 # spawn-rate = 10
 # expect-workers = 8
-run-time = "2m"
+run-time = "1h"
+
+# THIS FIELD IS REDEFINED FROM ORIGINAL LOCUST DEFINITION
+# IF SET TO TRUE, CSV PATH WILL BE IN REPORT FOLDER
+# csv = true
+# csv-full-history = true

@@ -8,6 +8,7 @@ class Config:
             self, 
             local: bool,
             config_path: Path | str, 
+            bts_unix: int
     ):
         c = toml.load(config_path)
         
@@ -17,6 +18,8 @@ class Config:
         self.cli.update(_c)
         del self.cli['local']
         del self.cli['global']
+        self.cli['bts_unix'] = bts_unix
+        self.cli['carbon_report_root_path'] = str(Path(self.cli['carbon_report_root_path']) / str(self.cli['bts_unix']))
         
         # Locust configs
         self.locust = c['locust']
@@ -27,17 +30,25 @@ class Config:
     def to_locust_args(self) -> str:
         a = []
         
-        if self.locust['headless']:
+        if self.locust.get('headless', None):
             a.append('--headless')
             
         a.extend(['--locustfile', self.locust['locustfile']])
         a.extend(['--host', self.locust['host']])
         a.extend(['--users', self.locust['users']])
         
-        if 'run-time' in self.locust:
+        if self.locust.get('csv', None):
+            self.locust['csv'] = str(Path(self.cli['carbon_report_root_path']) /  f"locust")
+            a.extend(['--csv', self.locust['csv']])
+            
+        if self.locust.get('csv-full-history', None):
+            a.append('--csv-full-history')
+            
+        
+        if self.locust.get('run-time', None):
             a.extend(['--run-time', self.locust['run-time']])
         
-        if 'processes' in self.locust:
+        if self.locust.get('processes', None):
             a.extend(['--processes', self.locust['processes']])
         
         return a

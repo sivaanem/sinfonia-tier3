@@ -22,7 +22,7 @@ def loadtest(
         dry_run: bool = typer.Option(False),
         config_path: str = typer.Option('src/loadtest/.cli.toml'),
 ):    
-    config = Config(local, config_path)
+    config = Config(local, config_path, int(time.time()))
     
     print(repr(config))
     proceed = typer.confirm('Proceed?')
@@ -39,15 +39,8 @@ def loadtest(
     print('\nStarting ...\n')
     time.sleep(1)
     
-    # Add base timestamp for current session
-    bts_unix = int(time.time())
-    config.cli['bts_unix'] = bts_unix
-    
     # Create report folder for current session
-    report_root_path = config.cli['carbon_report_root_path']
-    session_root_path = str(Path(report_root_path) / str(bts_unix))
-    os.makedirs(session_root_path, exist_ok=False)
-    config.cli['carbon_report_root_path'] = session_root_path
+    os.makedirs(config.cli['carbon_report_root_path'], exist_ok=False)
     
     # Execute loadtest at different RPS
     for rps_per_user in config.rps['rps_per_users']:
