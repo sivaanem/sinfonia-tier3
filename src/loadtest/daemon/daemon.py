@@ -10,7 +10,6 @@ _D: List[threading.Thread] = []
 _MAX_DAEMON = 10  # Maximum number of concurrent daemons
 
 
-@dataclass
 class Config:
     def to_dict(self):
         return asdict(self)
