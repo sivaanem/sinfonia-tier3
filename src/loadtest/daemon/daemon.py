@@ -28,7 +28,7 @@ def start(j: Callable, c: Config) -> int:
     if len(_D) >= _MAX_DAEMON:
         raise AssertionError("maximum number of concurrent daemon reached")
     
-    t = threading.Thread(target=j, kwargs=c.to_dict(), daemon=True)
+    t = threading.Thread(target=j, args=[c], daemon=True)
     t.start()
     
     _D.append(t)

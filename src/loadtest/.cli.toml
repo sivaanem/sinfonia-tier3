@@ -3,7 +3,10 @@ locustfile = "src/loadtest/locustfile.py"
 rps_per_user = [50]
 # num_workers = 3
 run_time = "2m"
-tspad_seconds = 0
+sps = 0
+carbon_report_interval_seconds = 10
+carbon_url_path = '/carbon'
+carbon_report_path = 'src/loadtest/report'
 
 [cli.local]
 host = "http://localhost"
