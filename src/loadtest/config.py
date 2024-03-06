@@ -1,6 +1,4 @@
-"""Quick and dirty dependency injection"""
-from typing import Optional, List
-
+import time
 import toml
 from pathlib import Path
 
@@ -13,13 +11,18 @@ class Config:
     ):
         c = toml.load(config_path)
         
+        # CLI configs
         self.cli = c['cli']
         _c = self.cli['local'] if local else self.cli['global']
         self.cli.update(_c)
         del self.cli['local']
         del self.cli['global']
         
+        # Locust configs
         self.locust = c['locust']
+        
+        # Auto-generated configs
+        self._cli_ts = int(time.time())  # Current timestamp
 
     def to_locust_args(self) -> str:
         a = []
@@ -41,7 +44,10 @@ class Config:
     
     def export_cli_to_toml(self, path: Path | str):
         with open(path, 'w') as f:
+            f.write("# This is an auto-generated file\n")
+            f.write('\n')
             toml.dump(self.cli, f)
+            f.write(f"_cli_ts = {self._cli_ts}")
 
     def _repr(self, d):
         r = ""

@@ -2094,6 +2094,17 @@ files = [
 ]
 
 [[package]]
+name = "schedule"
+version = "1.2.1"
+description = "Job scheduling for humans."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "schedule-1.2.1-py2.py3-none-any.whl", hash = "sha256:14cdeb083a596aa1de6dc77639a1b2ac8bf6eaafa82b1c9279d3612823063d01"},
+    {file = "schedule-1.2.1.tar.gz", hash = "sha256:843bc0538b99c93f02b8b50e3e39886c06f2d003b24f48e1aa4cadfa3f341279"},
+]
+
+[[package]]
 name = "schema"
 version = "0.7.5"
 description = "Simple data validation library"
@@ -2652,4 +2663,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7"
-content-hash = "90cf17e28337eb3393ef6b6afd8e62017422ee51b377ec66057f59d983a05df6"
+content-hash = "a7faa64dd98af959599ab1cc01cf32a8ebdda86c5ddc5208b9a916fc6ab81451"

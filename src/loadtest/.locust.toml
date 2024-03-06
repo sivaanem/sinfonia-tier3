@@ -1,6 +1,9 @@
+# This is an auto-generated file
+
 locustfile = "src/loadtest/locustfile.py"
 rps_per_user = [ 50,]
 run_time = "2m"
 tspad_seconds = 0
-host = "http://obelix30.cs.umass.edu"
-port = 30080
+host = "http://localhost"
+port = 8000
+_cli_ts = 1709684638
