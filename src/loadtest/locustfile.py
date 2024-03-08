@@ -3,7 +3,6 @@ from typing import Optional, Dict, Any
 import time
 import toml
 
-import locust.stats
 from locust import FastHttpUser, events, task, constant_throughput
 from locust.runners import WorkerRunner
 from yarl import URL
@@ -34,8 +33,8 @@ class MatMulUser(FastHttpUser):
         self.client.post(
             _MATMUL_URL,
             json={
-                'matrix1': fake.bigmath.square_matrix(n=100),
-                'matrix2': fake.bigmath.square_matrix(n=100),
+                'matrix1': fake.maths.square_matrix_60,
+                'matrix2': fake.maths.square_matrix_60,
                 }
             )
 
@@ -43,7 +42,6 @@ class MatMulUser(FastHttpUser):
 @events.test_start.add_listener
 def on_startup(environment, **kw):
     environment.stats.use_response_times_cache = True
-    MatMulUser.wait_time = _RPS_PER_USER
     
     init_resources()
     
@@ -81,7 +79,7 @@ def start_daemons():
         rps=_RPS_PER_USER * _CONFIG['num_users'],
         sps=_CONFIG['sps'],
         interval_seconds=_CONFIG['carbon_report_interval_seconds'],
-        carbon_url=str(URL(_TIER2_ROOT_URL) / _CONFIG['carbon_url_path']),
+        carbon_url=str(URL(_TIER2_ROOT_URL) / 'carbon'),
         report_root_path=_CONFIG['carbon_report_root_path'],
         )
     daemon.start(j, c)

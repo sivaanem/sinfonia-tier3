@@ -2,12 +2,12 @@
 locustfile = "src/loadtest/locustfile.py"
 sps = 0
 carbon_report_interval_seconds = 10
-carbon_url_path = 'carbon'
 carbon_report_root_path = 'src/loadtest/report'
 
 [rps]
 # TODO: Need to figure out how to run test on 0rps
-rps_per_users = [50.0]
+# rps_per_users = [6.25, 50.0, 100.0]
+rps_per_users = [80.0]
 
 [cli.local]
 service_root_url = "http://localhost:8000"
@@ -20,11 +20,11 @@ tier2_root_url = "http://10.43.223.99/api/v1"
 locustfile = "src/loadtest/locustfile.py"
 headless = true
 host = "http://localhost"
-users = 8
-processes = 8
+users = 9
+processes = 9
 # spawn-rate = 10
 # expect-workers = 8
-run-time = "1h"
+run-time = "10m"
 
 # THIS FIELD IS REDEFINED FROM ORIGINAL LOCUST DEFINITION
 # IF SET TO TRUE, CSV PATH WILL BE IN REPORT FOLDER

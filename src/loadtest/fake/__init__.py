@@ -1,1 +1,1 @@
-import src.loadtest.fake.bigmath as bigmath
+from . import maths as maths

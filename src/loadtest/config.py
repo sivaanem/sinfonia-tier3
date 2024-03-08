@@ -37,18 +37,18 @@ class Config:
         a.extend(['--host', self.locust['host']])
         a.extend(['--users', self.locust['users']])
         
-        if self.locust.get('csv', None):
-            self.locust['csv'] = str(Path(self.cli['carbon_report_root_path']) /  f"locust")
-            a.extend(['--csv', self.locust['csv']])
+        # if self.locust.get('csv', None):
+        #     self.locust['csv'] = str(Path(self.cli['carbon_report_root_path']) /  f"locust")
+        #     a.extend(['--csv', self.locust['csv']])
             
-        if self.locust.get('csv-full-history', None):
-            a.append('--csv-full-history')
+        # if self.locust.get('csv-full-history', None):
+        #     a.append('--csv-full-history')
             
         
-        if self.locust.get('run-time', None):
+        if 'run-time' in self.locust:
             a.extend(['--run-time', self.locust['run-time']])
         
-        if self.locust.get('processes', None):
+        if 'processes' in self.locust:
             a.extend(['--processes', self.locust['processes']])
         
         return a
