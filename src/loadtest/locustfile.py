@@ -30,12 +30,9 @@ class MatMulUser(FastHttpUser):
 
     @task
     def matmul(self):
-        self.client.post(
+        self.client.get(
             _MATMUL_URL,
-            json={
-                'matrix1': fake.maths.square_matrix_60,
-                'matrix2': fake.maths.square_matrix_60,
-                }
+            params={'sz': 62}
             )
 
         
