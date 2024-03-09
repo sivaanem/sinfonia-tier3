@@ -2,11 +2,11 @@ from __future__ import annotations
 from typing import List
 
 import csv
-import os
 import time
 import requests
 from dataclasses import dataclass, asdict, fields
 from pathlib import Path
+
 from yarl import URL
 
 from . import daemon
@@ -41,7 +41,7 @@ def job(c: CarbonReportConfig):
 
         req: requests.Response = requests.get(
             c.carbon_url,
-            params={'tspad': (ct - c.bts_unix) * c.sps},
+            params={'tspad': (ct - c.bts_unix) * c.clock_seconds_per_second},
             )
         
         data = req.json()
@@ -60,15 +60,15 @@ def job(c: CarbonReportConfig):
                     ).get_row()
                 )
         
-        time.sleep(c.interval_seconds)
+        time.sleep(c.report_per_second)
 
 
-@dataclass
+@dataclass(init=True)
 class CarbonReportConfig(daemon.Config):
     bts_unix: int  # Base timestamp Unix
     num_users: int  # Number of locust users
     rps: int  # RPS for the current session
-    sps: int  # Seconds per seconds
-    interval_seconds: int  # Report interval
+    clock_seconds_per_second: int  # Seconds per seconds
     carbon_url: URL | str  # Carbon data URL
+    report_per_second: int  # Report interval
     report_root_path: str  # File to save carbon CSV report

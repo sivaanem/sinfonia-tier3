@@ -8,5 +8,5 @@ __pycache__/
 *.swp
 report
 
-./src/loadtest/.cli.toml
-./src/loadtest/.locust.toml
+src/loadtest/.cli.toml
+src/loadtest/.locust.toml

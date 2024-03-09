@@ -2,31 +2,31 @@ from typing import Optional, Dict, Any
 
 import time
 import toml
+import logging
 
+import locust.stats
 from locust import FastHttpUser, events, task, constant_throughput
 from locust.runners import WorkerRunner
 from yarl import URL
 
 import src.loadtest.daemon as daemon
-from src.loadtest import fake
 
 
-# locust.stats.CSV_STATS_INTERVAL_SEC = 10 # default is 1 second
-# locust.stats.CSV_STATS_FLUSH_INTERVAL_SEC = 10 # Determines how often the data is flushed to disk, default is 10 seconds
+locust.stats.CONSOLE_STATS_INTERVAL_SEC = 2
+
 
 _RPS_PER_USER: float = 0
 _CONFIG: Dict[str, Any] = dict()
-_TIER2_ROOT_URL: Optional[str] = None
-_APP_ROOT_URL: Optional[str] = None
-_MATMUL_URL: Optional[str] = None
+_TIER2_ROOT_URL: str = ""
+_APP_ROOT_URL: str = ""
+_MATMUL_URL: str = ""
+_REPORT_ROOT_PATH: Optional[str] = None
+# _FSCV = None  # CSV file stream
 
 
 class MatMulUser(FastHttpUser):
-    # Maximum request load per second
-    # wait_time = constant_throughput(1)
-    
     # Number of allowed concurrent requests
-    concurrency = 1000000
+    # concurrency = 1000000
 
     @task
     def matmul(self):
@@ -46,7 +46,72 @@ def on_startup(environment, **kw):
         return
     
     start_daemons()
-    print('Starting master runner')
+    logging.info('Starting master runner')
+    
+    
+# @events.test_stop.add_listener
+# def on_shutdown(environment, **kw):
+#     _FSCV.close()
+    
+    
+# @events.report_to_master.add_listener
+# def on_report_to_master(client_id, data):
+#     logging.info('Reporting to master runner ...')
+#     pass
+        
+  
+# LOCUST DATA OBJECT      
+# {
+#   "hello": "world",
+#   "stats": [
+#     {
+#       "name": "http://localhost:8000/matmul",
+#       "method": "GET",
+#       "last_request_timestamp": 1709935345.0991318,
+#       "start_time": 1709935342.9823792,
+#       "num_requests": 3,
+#       "num_none_requests": 0,
+#       "num_failures": 3,
+#       "total_response_time": 4,
+#       "max_response_time": 2,
+#       "min_response_time": 1,
+#       "total_content_length": 0,
+#       "response_times": { "1": 2, "2": 1 },
+#       "num_reqs_per_sec": { 1709935343: 1, 1709935344: 1, 1709935345: 1 },
+#       "num_fail_per_sec": { 1709935343: 1, 1709935344: 1, 1709935345: 1 }
+#     }
+#   ],
+#   "stats_total": {
+#     "name": "Aggregated",
+#     "method": "",
+#     "last_request_timestamp": 1709935345.0991127,
+#     "start_time": 1709935342.9824312,
+#     "num_requests": 3,
+#     "num_none_requests": 0,
+#     "num_failures": 3,
+#     "total_response_time": 4,
+#     "max_response_time": 2,
+#     "min_response_time": 1,
+#     "total_content_length": 0,
+#     "response_times": { "1": 2, "2": 1 },
+#     "num_reqs_per_sec": { 1709935343: 1, 1709935344: 1, 1709935345: 1 },
+#     "num_fail_per_sec": { 1709935343: 1, 1709935344: 1, 1709935345: 1 }
+#   },
+#   "errors": {
+#     "77b14b0cfa3ab825485fcae739d0d8fa6ca6f75205f71c102dce61073af47721": {
+#       "name": "http://localhost:8000/matmul",
+#       "method": "GET",
+#       "error": "ConnectionRefusedError(111, 'Connection refused')",
+#       "occurrences": 3
+#     }
+#   },
+#   "user_classes_count": { "MatMulUser": 1 },
+#   "user_count": 1
+# }
+        
+# @events.worker_report.add_listener
+# def on_worker_report(client_id, data):
+#     pass
         
         
 def init_resources():
@@ -54,30 +119,46 @@ def init_resources():
     _CONFIG = toml.load('src/loadtest/.locust.toml')
     
     global _RPS_PER_USER
-    _RPS_PER_USER = _CONFIG['rps_per_user']
-    MatMulUser.wait_time = constant_throughput(_RPS_PER_USER)
+    _RPS_PER_USER = _CONFIG['load']['rps_per_user']
     
     global _APP_ROOT_URL
-    _APP_ROOT_URL = _CONFIG['app_root_url']
+    _APP_ROOT_URL = _CONFIG['network']['app_root_url']
     
     global _TIER2_ROOT_URL
-    _TIER2_ROOT_URL = _CONFIG['tier2_root_url']
+    _TIER2_ROOT_URL = _CONFIG['network']['tier2_root_url']
     
     global _MATMUL_URL
     _MATMUL_URL = str(URL(_APP_ROOT_URL) / 'matmul')
+    
+    global _REPORT_ROOT_PATH
+    if 'report' in _CONFIG:
+        _REPORT_ROOT_PATH = _CONFIG['report']['report_root_path']
+    
+    # # Open Locust statistics CSV file stream
+    # global _FSCV
+    # if 'report' in _CONFIG:
+    #     _rps = _RPS_PER_USER * _CONFIG['load']['users']
+    #     _fn = f"locust-stats-{_rps}rps-{_CONFIG['load']['users']}u"
+    #     _FSCV = open(URL(_REPORT_ROOT_PATH) / _fn)
+    
+    MatMulUser.wait_time = constant_throughput(_RPS_PER_USER)
         
         
 def start_daemons():
     # Carbon report daemon
+    if 'report' not in _CONFIG:
+        return
+    
     j = daemon.carbon_report.job
+    
     c = daemon.carbon_report.CarbonReportConfig(
-        bts_unix=_CONFIG['bts_unix'],
-        num_users=_CONFIG['num_users'],
-        rps=_RPS_PER_USER * _CONFIG['num_users'],
-        sps=_CONFIG['sps'],
-        interval_seconds=_CONFIG['carbon_report_interval_seconds'],
+        bts_unix=_CONFIG['metadata']['bts_unix'],
+        num_users=_CONFIG['load']['users'],
+        rps=_RPS_PER_USER * _CONFIG['load']['users'],
+        clock_seconds_per_second=_CONFIG['load']['clock_seconds_per_second'],
         carbon_url=str(URL(_TIER2_ROOT_URL) / 'carbon'),
-        report_root_path=_CONFIG['carbon_report_root_path'],
+        report_per_second=_CONFIG['report']['report_per_second'],
+        report_root_path=_CONFIG['report']['report_root_path'],
         )
     daemon.start(j, c)
         
