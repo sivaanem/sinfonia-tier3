@@ -40,7 +40,9 @@ class Config:
         a.extend(['--locustfile', self.c['cli']['locustfile']])
         a.extend(['--host', 'http://localhost'])
         a.extend(['--users', self.c['load']['users']])
-        a.extend(['--processes', self.c['load']['processes']])
+        
+        if 'processes' in self.c['load']:
+            a.extend(['--processes', self.c['load']['processes']])
         
         if 'run_time' in self.c['load']:
             a.extend(['--run-time', self.c['load']['run_time']])
@@ -53,8 +55,8 @@ class Config:
             
         if self.c['cli']['is_report']:        
             if self.c['report']['is_report_locust_stats']:
-                _rps = int(rps_per_user) * self.c['load']['users']
-                _fn = f"locust-stats-{_rps}rps-{self.c['load']['users']}u.csv"
+                _rps = int(rps_per_user * self.c['load']['users'] * 10)
+                _fn = f"locust-stats-{_rps}rps-{self.c['load']['matrix_size']}msz.csv"
                 _fp = str(Path(self.c['report']['report_root_path']) / _fn)
                 a.extend(['--csv', _fp])
         
@@ -65,7 +67,6 @@ class Config:
         _c = {k: v for k,v in self.c.items() if k != 'cli'}
         
         # Replace 'rps_per_users' with single 'rps_per_user' value
-        del _c['load']['rps_per_users']
         _c['load']['rps_per_user'] = rps_per_user
         
         with open(path, 'w') as f:

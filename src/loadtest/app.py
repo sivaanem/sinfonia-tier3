@@ -36,7 +36,7 @@ def loadtest(
     # Execute loadtest at different RPS
     for rps_per_user in config.c['load']['rps_per_users']:
         num_users = config.c['load']['users']
-        print(f'Running loadtest @ {rps_per_user * num_users} req/sec ...')
+        print(f'Running loadtest @ {rps_per_user * num_users * 10} req/sec ...')
         
         # Export locust config to file
         config.export_cli_to_toml('src/loadtest/.locust.toml', rps_per_user)
@@ -46,8 +46,11 @@ def loadtest(
         locust_cmd = locust.__getitem__(locust_args)
         locust_cmd & plumbum.FG
         
-    print('Stopping ...\n')
-    time.sleep(1)
+        print('Done! Thirty-second cool down ...')
+        for i in range(30, 0, -1):
+            print(f"{i} ...")
+            time.sleep(1)
+        print()
         
 
 if __name__ == '__main__':

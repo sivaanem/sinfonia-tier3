@@ -2,6 +2,7 @@ from typing import Optional, Dict, Any
 
 import time
 import toml
+import gevent
 import logging
 
 import locust.stats
@@ -21,19 +22,31 @@ _TIER2_ROOT_URL: str = ""
 _APP_ROOT_URL: str = ""
 _MATMUL_URL: str = ""
 _REPORT_ROOT_PATH: Optional[str] = None
+_MATRIX_SIZE = int = 0
 # _FSCV = None  # CSV file stream
 
 
 class MatMulUser(FastHttpUser):
     # Number of allowed concurrent requests
-    # concurrency = 1000000
+    concurrency = 100
 
     @task
     def matmul(self):
-        self.client.get(
-            _MATMUL_URL,
-            params={'sz': 62}
-            )
+        def _matmul():
+            self.client.get(
+                _MATMUL_URL,
+                params={
+                    'gen': _CONFIG['load']['is_generate_matrix'],
+                    'sz': _MATRIX_SIZE
+                    }
+                )
+    
+        # Spawn concurrent coroutines        
+        pool = gevent.pool.Pool()
+        for _ in range(10):
+            pool.spawn(_matmul)
+            
+        pool.join()
 
         
 @events.test_start.add_listener
@@ -130,6 +143,9 @@ def init_resources():
     global _MATMUL_URL
     _MATMUL_URL = str(URL(_APP_ROOT_URL) / 'matmul')
     
+    global _MATRIX_SIZE
+    _MATRIX_SIZE = _CONFIG['load']['matrix_size']
+    
     global _REPORT_ROOT_PATH
     if 'report' in _CONFIG:
         _REPORT_ROOT_PATH = _CONFIG['report']['report_root_path']
@@ -138,7 +154,7 @@ def init_resources():
     # global _FSCV
     # if 'report' in _CONFIG:
     #     _rps = _RPS_PER_USER * _CONFIG['load']['users']
-    #     _fn = f"locust-stats-{_rps}rps-{_CONFIG['load']['users']}u"
+    #     _fn = f"locust-stats-{_rps}rps-{_CONFIG['load']['matrix_size']}msz"
     #     _FSCV = open(URL(_REPORT_ROOT_PATH) / _fn)
     
     MatMulUser.wait_time = constant_throughput(_RPS_PER_USER)
@@ -153,8 +169,8 @@ def start_daemons():
     
     c = daemon.carbon_report.CarbonReportConfig(
         bts_unix=_CONFIG['metadata']['bts_unix'],
-        num_users=_CONFIG['load']['users'],
-        rps=_RPS_PER_USER * _CONFIG['load']['users'],
+        matrix_size=_MATRIX_SIZE,
+        rps=_RPS_PER_USER * _CONFIG['load']['users'] * 10,
         clock_seconds_per_second=_CONFIG['load']['clock_seconds_per_second'],
         carbon_url=str(URL(_TIER2_ROOT_URL) / 'carbon'),
         report_per_second=_CONFIG['report']['report_per_second'],
