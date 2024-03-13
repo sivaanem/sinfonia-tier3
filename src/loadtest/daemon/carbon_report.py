@@ -22,6 +22,8 @@ def job(c: CarbonReportConfig):
         carbon_intensity_gco2_kwh: float
         energy_use_joules: float
         carbon_emission_gco2: float
+        cpu_ratio_pct: float
+        mem_ratio_pct: float
         
         @classmethod
         def get_column(cls) -> List:
@@ -39,12 +41,17 @@ def job(c: CarbonReportConfig):
     while True:
         ct = int(time.time())
 
-        req: requests.Response = requests.get(
+        req_carbon = requests.get(
             c.carbon_url,
             params={'tspad': (ct - c.bts_unix) * c.clock_seconds_per_second},
             )
         
-        data = req.json()
+        req_resu = requests.get(
+            c.carbon_url,
+            params={'tspad': (ct - c.bts_unix) * c.clock_seconds_per_second},
+            )
+        
+        data = req_carbon.json()
         ci = data.get('carbon_intensity_gco2_kwh', '')
         eu = data.get('energy_use_joules', '')
         ce = data.get('carbon_emission_gco2', '')

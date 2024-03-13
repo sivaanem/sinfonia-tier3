@@ -173,6 +173,7 @@ def start_daemons():
         rps=_RPS_PER_USER * _CONFIG['load']['users'] * 10,
         clock_seconds_per_second=_CONFIG['load']['clock_seconds_per_second'],
         carbon_url=str(URL(_TIER2_ROOT_URL) / 'carbon'),
+        resu_url=str(URL(_TIER2_ROOT_URL) / 'resu'),
         report_per_second=_CONFIG['report']['report_per_second'],
         report_root_path=_CONFIG['report']['report_root_path'],
         )
