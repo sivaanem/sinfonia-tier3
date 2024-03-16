@@ -46,15 +46,19 @@ def job(c: CarbonReportConfig):
             params={'tspad': (ct - c.bts_unix) * c.clock_seconds_per_second},
             )
         
+        data = req_carbon.json()
+        ci = data.get('carbon_intensity_gco2_kwh', '')
+        eu = data.get('energy_use_joules', '')
+        ce = data.get('carbon_emission_gco2', '')
+        
         req_resu = requests.get(
             c.carbon_url,
             params={'tspad': (ct - c.bts_unix) * c.clock_seconds_per_second},
             )
         
-        data = req_carbon.json()
-        ci = data.get('carbon_intensity_gco2_kwh', '')
-        eu = data.get('energy_use_joules', '')
-        ce = data.get('carbon_emission_gco2', '')
+        data_resu = req_resu.json()
+        cpu_ratio = data_resu.get('cpu_ratio', '')
+        mem_ratio = data_resu.get('mem_ratio', '')
         
         with open(fp, 'a') as f:
             w = csv.writer(f)
@@ -64,6 +68,8 @@ def job(c: CarbonReportConfig):
                     carbon_intensity_gco2_kwh=ci,
                     energy_use_joules=eu,
                     carbon_emission_gco2=ce,
+                    cpu_ratio_pct=cpu_ratio * 100,
+                    mem_ratio_pct=mem_ratio * 100
                     ).get_row()
                 )
         
@@ -77,5 +83,6 @@ class CarbonReportConfig(daemon.Config):
     rps: int  # RPS for the current session
     clock_seconds_per_second: int  # Seconds per seconds
     carbon_url: URL | str  # Carbon data URL
+    resu_url: URL | str  # Resource usage URL
     report_per_second: int  # Report interval
     report_root_path: str  # File to save carbon CSV report

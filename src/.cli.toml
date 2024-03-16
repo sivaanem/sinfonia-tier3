@@ -14,7 +14,7 @@ tier2_root_url = "http://localhost:5000"
 
 [network.global]
 app_root_url = "http://obelix30.cs.umass.edu:30080/api/v1"
-tier2_root_url = "http://10.43.223.99/api/v1"
+tier2_root_url = "http://192.168.245.30/api/v1"
 
 [load]
 # TODO: Need to figure out how to run test on 0rps
