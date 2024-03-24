@@ -46,9 +46,10 @@ def loadtest(
         locust_cmd = locust.__getitem__(locust_args)
         locust_cmd & plumbum.FG
         
-        print('Done! Thirty-second cool down ...')
-        for i in range(30, 0, -1):
-            print(f"{i} ...")
+        print('Done! 45-second cool down ...')
+        for i in range(45, 0, -1):
+            if i % 5 == 0:
+                print(f"{i} ...", end="")
             time.sleep(1)
         print()
         

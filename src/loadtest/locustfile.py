@@ -166,7 +166,6 @@ def start_daemons():
         return
     
     j = daemon.carbon_report.job
-    
     c = daemon.carbon_report.CarbonReportConfig(
         bts_unix=_CONFIG['metadata']['bts_unix'],
         matrix_size=_MATRIX_SIZE,
@@ -177,5 +176,6 @@ def start_daemons():
         report_per_second=_CONFIG['report']['report_per_second'],
         report_root_path=_CONFIG['report']['report_root_path'],
         )
+    
     daemon.start(j, c)
         
