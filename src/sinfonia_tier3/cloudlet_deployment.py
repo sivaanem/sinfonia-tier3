@@ -112,7 +112,7 @@ def sinfonia_deploy(
     )
 
     if debug:
-        print("\ndeployment_url:", deployment_url)
+        print("[debug] deployment_url:", deployment_url)
 
     # fire off deployment request
     response = requests.post(str(deployment_url))

@@ -48,6 +48,7 @@ schedule = "^1.2.1"
 matplotlib = {version = "^3.8.3", python = "3.10"}
 pandas = {version = "^2.2.1", python = "3.10"}
 ipykernel = {version = "^6.29.3", python = "3.10"}
+colorama = "^0.4.6"
 
 [tool.poetry.scripts]
 loadtest = "loadtest.app:app"
