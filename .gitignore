@@ -3,6 +3,7 @@
 
 /dist/
 /src/sinfonia_tier3/wireguard-go
+/src/sinfonia_tier3_loadtest/wireguard-go
 __pycache__/
 *~
 *.swp

@@ -36,7 +36,7 @@ def unique_namespace_name(name: str) -> str:
 def sudo_create_wireguard_tunnel(
     netns_pid: int, interface: str, config: WireguardConfig, tmpdir: Path
 ) -> None:
-    """Try to bring up wireguard tunnel with sudo sinfonia_tier3.root_helper"""
+    """Try to bring up wireguard tunnel with sudo sinfonia_tier3_loadtest.root_helper"""
     sudo = which("sudo")
     assert sudo is not None
 
@@ -123,13 +123,13 @@ def sinfonia_runapp(
                     print("Failed to run sudo root helper")
                     netns_proc.kill()
                     
-            # loadtest_command = "poetry run loadtest --headless"
-            # netns_proc.stdin.write(loadtest_command.encode("utf-8"))
-            # netns_proc.stdin.write(b"\n")
-            # netns_proc.stdin.flush() 
+            loadtest_command = "poetry run loadtest --headless"
+            netns_proc.stdin.write(loadtest_command.encode("utf-8"))
+            netns_proc.stdin.write(b"\n")
+            netns_proc.stdin.flush() 
             
-            # for line in iter(netns_proc.stdout.readline, b''):
-            #     print(line.decode().strip())
+            for line in iter(netns_proc.stdout.readline, b''):
+                print(line.decode().strip())
             
             # leaving the context will wait for the application to exit
     return 0

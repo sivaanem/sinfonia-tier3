@@ -53,6 +53,7 @@ colorama = "^0.4.6"
 [tool.poetry.scripts]
 loadtest = "loadtest.app:app"
 sinfonia-tier3 = "sinfonia_tier3.cli:main"
+sinfonia-tier3-loadtest = "sinfonia_tier3_loadtest.cli:main"
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.10.0"
