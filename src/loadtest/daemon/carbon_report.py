@@ -52,8 +52,9 @@ def job(c: CarbonReportConfig):
         ce = data.get('carbon_emission_gco2', '')
         
         req_resu = requests.get(
-            c.carbon_url,
-            params={'tspad': (ct - c.bts_unix) * c.clock_seconds_per_second},
+            c.resu_url,
+            # params={'tspad': (ct - c.bts_unix) * c.clock_seconds_per_second},
+            params={'tspad': 0}
             )
         
         data_resu = req_resu.json()

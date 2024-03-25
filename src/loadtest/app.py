@@ -19,13 +19,16 @@ locust = plumbum.local['locust']
 @app.command()
 def loadtest(
         config_path: str = typer.Option('src/loadtest/.cli.toml'),
+        headless: bool = typer.Option(False),
 ):    
     config = Config(config_path)
     
     print(repr(config))
-    proceed = typer.confirm('Proceed?')
-    if not proceed:
-        raise typer.Abort()
+    
+    if not headless:
+        proceed = typer.confirm('Proceed?')
+        if not proceed:
+            raise typer.Abort()
     
     print('\nStarting ...\n')
     
@@ -39,7 +42,7 @@ def loadtest(
         print(f'Running loadtest @ {rps_per_user * num_users * 10} req/sec ...')
         
         # Export locust config to file
-        config.export_cli_to_toml('src/loadtest/.locust.toml', rps_per_user)
+        config.export_cli_to_toml('src/loadtest/.locust.autogen.toml', rps_per_user)
         
         # Spawn locust command thread and pipe output to foreground
         locust_args = config.to_locust_args(rps_per_user)

@@ -9,4 +9,4 @@ __pycache__/
 report
 
 src/loadtest/.cli.toml
-src/loadtest/.locust.toml
+src/loadtest/.locust.autogen.toml
