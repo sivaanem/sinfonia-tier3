@@ -55,3 +55,21 @@ def bold(*tp) -> str:
     """Returns a bolded string."""
     t = ' '.join(tp)
     return _BOLD + t + _END
+
+
+def start_cyan() -> str:
+    """Returns cyan format string"""
+    return Fore.CYAN
+
+
+def reset() -> str:
+    """Returns reset format string"""
+    return Fore.RESET + Back.RESET
+
+
+class ForeCyan:
+    def __enter__(self):
+        print(Fore.CYAN, end='')
+        
+    def __exit__(self, exc_type, exc_value, traceback):
+        print(Fore.RESET, end='')

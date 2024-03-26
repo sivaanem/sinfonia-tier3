@@ -10,6 +10,6 @@
 
 __version__ = "0.7.3.post.dev0"
 
-from .cli import sinfonia_tier3
+from .cli import sinfonia_tier3_loadtest
 
 __all__ = ["sinfonia_tier3"]

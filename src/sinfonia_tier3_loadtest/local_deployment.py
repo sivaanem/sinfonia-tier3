@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import os
 import time
 import subprocess
 import sys
@@ -57,12 +58,35 @@ def sudo_create_wireguard_tunnel(
         ],
         check=True,
     )
+    
+
+def run_loadtest_proc(deployment_host, loadtest_config_path):
+    poetry_command = which("poetry")
+    assert poetry_command is not None
+    
+    if not loadtest_config_path:
+        loadtest_config_path = ""
+    
+    loadtest_command = [
+        poetry_command,
+        "run",
+        "loadtest",
+        "--headless",
+        "--tier2-url",
+        f"http://{deployment_host}",
+        "--config-path",
+        loadtest_config_path
+        ]
+    
+    loadtest_proc = subprocess.Popen(loadtest_command, text=True)
+    loadtest_proc.wait()
 
 
 def sinfonia_runapp(
     deployment_name: str,
     config: WireguardConfig,
     deployment_host: str,
+    loadtest_config_path: str,
     application: Sequence[str],
     config_debug: bool = False,
 ) -> int:
@@ -114,6 +138,7 @@ def sinfonia_runapp(
             + list(application),
             stdin=subprocess.PIPE, 
             stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         ) as netns_proc:
             try:
                 create_wireguard_tunnel(netns_proc.pid, WG, config, tmpdir)
@@ -125,39 +150,12 @@ def sinfonia_runapp(
                     print("Failed to run sudo root helper")
                     netns_proc.kill()
                     
-            loadtest_command = f"poetry run loadtest --headless --tier2-url=\"http://{deployment_host}\""
-            netns_proc.stdin.write(loadtest_command.encode("utf-8"))
-            netns_proc.stdin.write(b"\n") 
-            netns_proc.stdin.flush() 
-            
-            for line in iter(netns_proc.stdout.readline, b''):
-                print(line.decode().strip())
-                    
-            remaining_output = netns_proc.stdout.read()
-            if remaining_output:
-                print(remaining_output.decode().strip())
-                
-            loadtest_command = [
-                which("poetry"),
-                "run",
-                "loadtest",
-                "--headless",
-                "--tier2-url",
-                "\"http://{deployment_host}\""
-                ]
-            loadtest_proc = subprocess.run(
-                loadtest_command,
-                shell=True,
-                check=True,
-                capture_output=True,
-                )
-            
-            for line in iter(loadtest_proc.stdout.readline, b''):
-                print(line.decode().strip())
-                    
-            remaining_output = loadtest_proc.stdout.read()
-            if remaining_output:
-                print(remaining_output.decode().strip())
+            try:
+                run_loadtest_proc(deployment_host, loadtest_config_path)
+            except Exception as e:
+                print(f"exception {e}")
+                return 1
             
             # leaving the context will wait for the application to exit
+            
     return 0

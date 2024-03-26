@@ -11,3 +11,6 @@ report
 
 src/loadtest/.cli.toml
 src/loadtest/.locust.autogen.toml
+
+src/sinfonia_tier3_loadtest/.cli.toml
+src/sinfonia_tier3_loadtest/.locust.autogen.toml

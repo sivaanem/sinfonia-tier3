@@ -10,18 +10,21 @@
 
 from __future__ import annotations
 
+import time
 import argparse
 from io import StringIO
 from typing import Sequence
 from uuid import UUID
 
+import typer
 from requests.exceptions import HTTPError
 from yarl import URL
 
+from src.domain import format
 from . import __version__
 from .cloudlet_deployment import sinfonia_deploy, CloudletDeployment
 from .local_deployment import sinfonia_runapp
-from src.domain import format
+
 
 APP_NAME_TO_UUID = {
     "helloworld": "00000000-0000-0000-0000-000000000000",
@@ -33,6 +36,9 @@ UUID_TO_APP_NAME = {
     "00000000-0000-0000-0000-000000000111": "loadtest",
     "00000000-0000-0000-0000-000000000000": "helloworld",
 }
+
+
+cli = typer.Typer()
 
 
 def app_name_to_uuid(value: str) -> UUID:
@@ -89,6 +95,8 @@ def print_recap(
     
     status_repr = format.str.bold(format.str.green(connected_deployment.status))
     connected_deployment_host_repr = format.str.bold(format.str.magenta(connected_deployment_host))
+    
+    print(connected_deployment)
             
     print()
     print("DEPLOYMENT RECAP")
@@ -96,21 +104,32 @@ def print_recap(
     print(f"  * Deployment size: {len(deployments)}")
     print(f"  * Deployment hosts: {deployment_hosts}")
     print(f"  * Connection status: {status_repr}")
-    print(f"  * Connected host: {connected_deployment_host_repr}")
+    print(f"  * Connected host IP: {connected_deployment_host_repr}")
     print(f"  * Application key: {connected_deployment.application_key}")
     print(f"  * Deployment name: {connected_deployment.deployment_name}")
     print()
 
 
-def sinfonia_tier3(
-    tier1_url: URL | str,
-    application_uuid: UUID,
-    application: Sequence[str],
-    config_debug: bool = False,
-    debug: bool = False,
-    qrcode: str | None = None,
-    zeroconf: bool = False,
+@cli.command()
+def sinfonia_tier3_loadtest(
+        tier1_url: str = typer.Option("http://192.168.245.31:5000"),
+        application_uuid: str = typer.Option("loadtest"),
+        application: str = typer.Option("/bin/bash"),
+        loadtest_config_path: str = typer.Option("src/sinfonia_tier3_loadtest/.cli.toml"),
+        T: int = typer.Option(5, help="Number of samples"),
+        config_debug: bool = typer.Option(False),
+        debug: bool = typer.Option(False),
+        zeroconf: bool = typer.Option(False),
 ) -> int:
+    try:
+        application_uuid = UUID(application_uuid)
+    except Exception:
+        try:
+            application_uuid = app_name_to_uuid(application_uuid)
+        except Exception as e:
+            print(f"exception {e}")
+            exit(1)
+    
     # Request one or more backend deployments
     try:
         print("Deploying... ")
@@ -135,24 +154,27 @@ def sinfonia_tier3(
         deployments,
         deployment_data
     )
-            
-    return sinfonia_runapp(
-        deployment_data.deployment_name,
-        deployment_data.tunnel_config,
-        deployment_host,
-        application,
-        config_debug,
-    )
+    
+    for i in range(T):
+        print()
+        print(f"STARTING SAMPLE T = {i+1} (of {T})")
+        print("========================================")
+        print()
+        
+        # This is to wait for loadtest app to completely terminate
+        # Not ideal (and can bug), but this seems to work for now
+        time.sleep(5)
+        
+        with format.str.ForeCyan():
+            sinfonia_runapp(
+                deployment_data.deployment_name,
+                deployment_data.tunnel_config,
+                deployment_host,
+                loadtest_config_path,
+                application,
+                config_debug,
+            )
 
 
-def main() -> int:
-    args = parse_args()
-    return sinfonia_tier3(
-        args.tier1_url,
-        args.application_uuid,
-        args.application,
-        config_debug=args.config_debug,
-        debug=args.debug,
-        qrcode=args.qrcode,
-        zeroconf=args.zeroconf,
-    )
+if __name__ == '__main__':
+    cli()
