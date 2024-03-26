@@ -43,7 +43,7 @@ class MatMulUser(FastHttpUser):
     
         # Spawn concurrent coroutines        
         pool = gevent.pool.Pool()
-        for _ in range(10):
+        for _ in range(50):
             pool.spawn(_matmul)
             
         pool.join()
@@ -129,7 +129,7 @@ def on_startup(environment, **kw):
         
 def init_resources():
     global _CONFIG
-    _CONFIG = toml.load('src/loadtest/.locust.autogen.toml')
+    _CONFIG = toml.load('src/sinfonia_tier3_loadtest/.locust.autogen.toml')
     
     global _RPS_PER_USER
     _RPS_PER_USER = _CONFIG['load']['rps_per_user']

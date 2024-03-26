@@ -80,7 +80,7 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(args)
 
 
-def print_recap(
+def print_deployment_status(
         application_uuid: UUID,
         deployments: list[CloudletDeployment], 
         connected_deployment: CloudletDeployment
@@ -95,11 +95,9 @@ def print_recap(
     
     status_repr = format.str.bold(format.str.green(connected_deployment.status))
     connected_deployment_host_repr = format.str.bold(format.str.magenta(connected_deployment_host))
-    
-    print(connected_deployment)
             
     print()
-    print("DEPLOYMENT RECAP")
+    print("DEPLOYMENT STATUS")
     print(f"  * Deployed app: {application_uuid} ({uuid_to_app_name(application_uuid)})")
     print(f"  * Deployment size: {len(deployments)}")
     print(f"  * Deployment hosts: {deployment_hosts}")
@@ -130,50 +128,54 @@ def sinfonia_tier3_loadtest(
             print(f"exception {e}")
             exit(1)
     
-    # Request one or more backend deployments
-    try:
-        print("Deploying... ")
-        deployments = sinfonia_deploy(URL(tier1_url), application_uuid, debug, zeroconf)
-        print("Done!")
-    except ConnectionError:
-        print("failed to connect to sinfonia-tier1/-tier2")
-        return 1
-    except HTTPError as e:
-        print(f'failed to deploy backend: "{e.response.text}"')
-        return 1
-
-    # Pick the best deployment (first returned for now...)    
-    deployment_data = deployments[0]
-    deployment_peers_data = list(deployment_data.tunnel_config.peers.values())
-    deployment_host = str(deployment_peers_data[0].endpoint_host)
-    # print(deployment_data.to_pretty_format())
-    
-    
-    print_recap(
-        application_uuid,
-        deployments,
-        deployment_data
-    )
-    
-    for i in range(T):
+    for t in range(T):
         print()
-        print(f"STARTING SAMPLE T = {i+1} (of {T})")
+        print(f"STARTING SAMPLE T = {t+1} (of {T})")
         print("========================================")
         print()
         
+        # Request one or more backend deployments
+        try:
+            print("Deploying... ")
+            deployments = sinfonia_deploy(URL(tier1_url), application_uuid, debug, zeroconf)
+            print("Done!")
+        except ConnectionError:
+            print("failed to connect to sinfonia-tier1/-tier2")
+            return 1
+        except HTTPError as e:
+            print(f'failed to deploy backend: "{e.response.text}"')
+            return 1
+
+        # Pick the best deployment (first returned for now...)    
+        deployment_data = deployments[0]
+        deployment_peers_data = list(deployment_data.tunnel_config.peers.values())
+        deployment_host = str(deployment_peers_data[0].endpoint_host)
+        # print(deployment_data.to_pretty_format())
+        
+        print_deployment_status(
+            application_uuid,
+            deployments,
+            deployment_data
+        )
+        
         # This is to wait for loadtest app to completely terminate
         # Not ideal (and can bug), but this seems to work for now
-        time.sleep(5)
+        if t != 0:
+            time.sleep(45)
         
-        with format.str.ForeCyan():
-            sinfonia_runapp(
-                deployment_data.deployment_name,
-                deployment_data.tunnel_config,
-                deployment_host,
-                loadtest_config_path,
-                application,
-                config_debug,
-            )
+        try:
+            with format.str.ForeCyan():
+                sinfonia_runapp(
+                    deployment_data.deployment_name,
+                    deployment_data.tunnel_config,
+                    deployment_host,
+                    loadtest_config_path,
+                    application,
+                    config_debug,
+                )
+        except Exception as e:
+            print(f"exception: {e}")
+            break
 
 
 if __name__ == '__main__':

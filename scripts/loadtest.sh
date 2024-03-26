@@ -1,1 +1,1 @@
-poetry run sinfonia-tier3-loadtest http://192.168.245.31:5000 loadtest /bin/bash
+poetry run sinfonia-tier3-loadtest

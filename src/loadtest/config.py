@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import time
 import toml
@@ -33,11 +33,12 @@ class Config:
             self.c['report']['report_root_path'] = str(Path(self.c['report']['report_root_path']) / str(self.c['metadata']['bts_unix']))
     
 
-    def to_locust_args(self, rps_per_user: int = 0) -> str:
+    def to_locust_args(self, rps_per_user: int = 0) -> List[str]:
         a = []
         
-        a.append('--headless')    
+        a.append('--autostart')    
         a.extend(['--locustfile', self.c['cli']['locustfile']])
+        a.extend(['--autoquit', 1])
         a.extend(['--host', 'http://localhost'])
         a.extend(['--users', self.c['load']['users']])
         
@@ -60,7 +61,7 @@ class Config:
                 _fp = str(Path(self.c['report']['report_root_path']) / _fn)
                 a.extend(['--csv', _fp])
         
-        return a
+        return [str(v) for v in a]
     
     def export_cli_to_toml(self, path: Path | str, rps_per_user: int = 0):
         # Exclude 'cli' key

@@ -78,8 +78,11 @@ def run_loadtest_proc(deployment_host, loadtest_config_path):
         loadtest_config_path
         ]
     
-    loadtest_proc = subprocess.Popen(loadtest_command, text=True)
-    loadtest_proc.wait()
+    try:
+        loadtest_proc = subprocess.Popen(loadtest_command, text=True)
+        loadtest_proc.wait()
+    except Exception as e:
+        raise e
 
 
 def sinfonia_runapp(
@@ -134,9 +137,9 @@ def sinfonia_runapp(
                     ("--address", str(address)) for address in config.addresses
                 )
             )
-            + [WG]
-            + list(application),
-            stdin=subprocess.PIPE, 
+            + [WG],
+            # + list(application),
+            # stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         ) as netns_proc:
@@ -153,8 +156,7 @@ def sinfonia_runapp(
             try:
                 run_loadtest_proc(deployment_host, loadtest_config_path)
             except Exception as e:
-                print(f"exception {e}")
-                return 1
+                raise e
             
             # leaving the context will wait for the application to exit
             
