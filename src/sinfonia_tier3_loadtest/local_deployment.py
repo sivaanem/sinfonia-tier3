@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import time
 import subprocess
 import sys
 from itertools import chain
@@ -61,6 +62,7 @@ def sudo_create_wireguard_tunnel(
 def sinfonia_runapp(
     deployment_name: str,
     config: WireguardConfig,
+    deployment_host: str,
     application: Sequence[str],
     config_debug: bool = False,
 ) -> int:
@@ -123,13 +125,39 @@ def sinfonia_runapp(
                     print("Failed to run sudo root helper")
                     netns_proc.kill()
                     
-            loadtest_command = "poetry run loadtest --headless"
+            loadtest_command = f"poetry run loadtest --headless --tier2-url=\"http://{deployment_host}\""
             netns_proc.stdin.write(loadtest_command.encode("utf-8"))
-            netns_proc.stdin.write(b"\n")
+            netns_proc.stdin.write(b"\n") 
             netns_proc.stdin.flush() 
             
             for line in iter(netns_proc.stdout.readline, b''):
                 print(line.decode().strip())
+                    
+            remaining_output = netns_proc.stdout.read()
+            if remaining_output:
+                print(remaining_output.decode().strip())
+                
+            loadtest_command = [
+                which("poetry"),
+                "run",
+                "loadtest",
+                "--headless",
+                "--tier2-url",
+                "\"http://{deployment_host}\""
+                ]
+            loadtest_proc = subprocess.run(
+                loadtest_command,
+                shell=True,
+                check=True,
+                capture_output=True,
+                )
+            
+            for line in iter(loadtest_proc.stdout.readline, b''):
+                print(line.decode().strip())
+                    
+            remaining_output = loadtest_proc.stdout.read()
+            if remaining_output:
+                print(remaining_output.decode().strip())
             
             # leaving the context will wait for the application to exit
     return 0

@@ -125,7 +125,10 @@ def sinfonia_tier3(
 
     # Pick the best deployment (first returned for now...)    
     deployment_data = deployments[0]
+    deployment_peers_data = list(deployment_data.tunnel_config.peers.values())
+    deployment_host = str(deployment_peers_data[0].endpoint_host)
     # print(deployment_data.to_pretty_format())
+    
     
     print_recap(
         application_uuid,
@@ -136,6 +139,7 @@ def sinfonia_tier3(
     return sinfonia_runapp(
         deployment_data.deployment_name,
         deployment_data.tunnel_config,
+        deployment_host,
         application,
         config_debug,
     )

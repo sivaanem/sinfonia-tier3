@@ -20,8 +20,13 @@ locust = plumbum.local['locust']
 def loadtest(
         config_path: str = typer.Option('src/loadtest/.cli.toml'),
         headless: bool = typer.Option(False),
+        tier2_url: str = typer.Option("")
 ):    
     config = Config(config_path)
+    if tier2_url:
+        print(tier2_url)
+        config.c["network"]["app_root_url"] = str(URL(tier2_url).with_port(30080) / "api" / "v1")
+        config.c["network"]["tier2_root_url"] = str(URL(tier2_url).with_port(30051) / "api" / "v1")
     
     print(repr(config))
     
