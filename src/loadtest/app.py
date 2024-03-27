@@ -40,13 +40,13 @@ def loadtest(
     # Execute loadtest at different RPS
     for t, rps_per_user in enumerate(config.c['load']['rps_per_users']):
         # Cooldown
-        # if t != 0:
-        #     print('Done! 45-second cool down ...')
-        #     for i in range(45, 0, -1):
-        #         if i % 5 == 0:
-        #             print(f"{i} ...", end="", flush=True)
-        #         time.sleep(1)
-        #     print()
+        if t != 0:
+            print('Done! 45-second cool down ...')
+            for i in range(45, 0, -1):
+                if i % 5 == 0:
+                    print(f"{i} ...", end="", flush=True)
+                time.sleep(1)
+            print()
         
         num_users = config.c['load']['users']
         print(f'Running loadtest @ {rps_per_user * num_users * 50} req/sec ...', flush=True)
