@@ -1,0 +1,30 @@
+[cli]
+locustfile = "src/loadtest/locustfile.py"
+is_local = false
+is_report = true
+
+[report]
+is_report_locust_stats = true
+report_per_second = 10
+report_root_path = 'src/sinfonia_tier3_loadtest/report'
+
+[network.local]
+app_root_url = "http://localhost:8000"
+tier2_root_url = "http://localhost:5000"
+
+[network.global]
+app_root_url = "http://192.168.245.35:30080/api/v1"
+tier2_root_url = "http://192.168.245.35:30051/api/v1"
+
+[load]
+# TODO: Need to figure out how to run test on 0rps
+clock_seconds_per_second = 0
+matrix_size = 15
+is_generate_matrix = true
+# rps_per_users = [0.5, 2.5, 5.0, 7.5, 10.0, 12.5] # 0.1, 0.5, 2.5, 5.0, 7.5, 10.0,
+rps_per_users = [8]
+run_time = "10m"
+users = 50
+# expect_workers = 20
+processes = 30
+spawn_rate = 10
