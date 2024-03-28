@@ -10,6 +10,8 @@
 
 from __future__ import annotations
 
+import os
+import time
 import subprocess
 import sys
 from itertools import chain
@@ -56,11 +58,38 @@ def sudo_create_wireguard_tunnel(
         ],
         check=True,
     )
+    
+
+def run_loadtest_proc(deployment_host, loadtest_config_path):
+    poetry_command = which("poetry")
+    assert poetry_command is not None
+    
+    if not loadtest_config_path:
+        loadtest_config_path = ""
+    
+    loadtest_command = [
+        poetry_command,
+        "run",
+        "loadtest",
+        "--headless",
+        "--tier2-url",
+        f"http://{deployment_host}",
+        "--config-path",
+        loadtest_config_path
+        ]
+    
+    try:
+        loadtest_proc = subprocess.Popen(loadtest_command, text=True)
+        loadtest_proc.wait()
+    except Exception as e:
+        raise e
 
 
 def sinfonia_runapp(
     deployment_name: str,
     config: WireguardConfig,
+    deployment_host: str,
+    loadtest_config_path: str,
     application: Sequence[str],
     config_debug: bool = False,
 ) -> int:
@@ -108,10 +137,11 @@ def sinfonia_runapp(
                     ("--address", str(address)) for address in config.addresses
                 )
             )
-            + [WG]
-            + list(application),
-            stdin=subprocess.PIPE, 
+            + [WG],
+            # + list(application),
+            # stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         ) as netns_proc:
             try:
                 create_wireguard_tunnel(netns_proc.pid, WG, config, tmpdir)
@@ -123,13 +153,11 @@ def sinfonia_runapp(
                     print("Failed to run sudo root helper")
                     netns_proc.kill()
                     
-            loadtest_command = "poetry run loadtest --headless"
-            netns_proc.stdin.write(loadtest_command.encode("utf-8"))
-            netns_proc.stdin.write(b"\n")
-            netns_proc.stdin.flush() 
-            
-            for line in iter(netns_proc.stdout.readline, b''):
-                print(line.decode().strip())
+            try:
+                run_loadtest_proc(deployment_host, loadtest_config_path)
+            except Exception as e:
+                raise e
             
             # leaving the context will wait for the application to exit
+            
     return 0

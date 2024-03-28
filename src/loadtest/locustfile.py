@@ -16,6 +16,7 @@ import src.loadtest.daemon as daemon
 locust.stats.CONSOLE_STATS_INTERVAL_SEC = 2
 
 
+_NUM_CONCURRENT_REQ = 50
 _RPS_PER_USER: float = 0
 _CONFIG: Dict[str, Any] = dict()
 _TIER2_ROOT_URL: str = ""
@@ -43,7 +44,7 @@ class MatMulUser(FastHttpUser):
     
         # Spawn concurrent coroutines        
         pool = gevent.pool.Pool()
-        for _ in range(10):
+        for _ in range(_NUM_CONCURRENT_REQ):
             pool.spawn(_matmul)
             
         pool.join()
@@ -129,7 +130,7 @@ def on_startup(environment, **kw):
         
 def init_resources():
     global _CONFIG
-    _CONFIG = toml.load('src/loadtest/.locust.autogen.toml')
+    _CONFIG = toml.load('src/sinfonia_tier3_loadtest/.locust.autogen.toml')
     
     global _RPS_PER_USER
     _RPS_PER_USER = _CONFIG['load']['rps_per_user']
@@ -169,7 +170,7 @@ def start_daemons():
     c = daemon.carbon_report.CarbonReportConfig(
         bts_unix=_CONFIG['metadata']['bts_unix'],
         matrix_size=_MATRIX_SIZE,
-        rps=_RPS_PER_USER * _CONFIG['load']['users'] * 10,
+        rps=_RPS_PER_USER * _CONFIG['load']['users'] * _NUM_CONCURRENT_REQ,
         clock_seconds_per_second=_CONFIG['load']['clock_seconds_per_second'],
         carbon_url=str(URL(_TIER2_ROOT_URL) / 'carbon'),
         resu_url=str(URL(_TIER2_ROOT_URL) / 'resu'),

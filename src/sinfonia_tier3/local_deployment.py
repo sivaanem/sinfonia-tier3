@@ -110,8 +110,6 @@ def sinfonia_runapp(
             )
             + [WG]
             + list(application),
-            stdin=subprocess.PIPE, 
-            stdout=subprocess.PIPE,
         ) as netns_proc:
             try:
                 create_wireguard_tunnel(netns_proc.pid, WG, config, tmpdir)
@@ -122,14 +120,5 @@ def sinfonia_runapp(
                 except (AssertionError, subprocess.CalledProcessError):
                     print("Failed to run sudo root helper")
                     netns_proc.kill()
-                    
-            # loadtest_command = "poetry run loadtest --headless"
-            # netns_proc.stdin.write(loadtest_command.encode("utf-8"))
-            # netns_proc.stdin.write(b"\n")
-            # netns_proc.stdin.flush() 
             
-            # for line in iter(netns_proc.stdout.readline, b''):
-            #     print(line.decode().strip())
-            
-            # leaving the context will wait for the application to exit
     return 0

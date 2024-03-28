@@ -8,6 +8,3 @@ __pycache__/
 *~
 *.swp
 report
-
-src/loadtest/.cli.toml
-src/loadtest/.locust.autogen.toml
