@@ -1,0 +1,25 @@
+# This is an auto-generated file
+
+[report]
+is_report_locust_stats = true
+report_per_second = 10
+report_root_path = "src/sinfonia_tier3_loadtest/report/1711665678"
+
+[network]
+app_root_url = "http://192.168.245.35:30080/api/v1"
+tier2_root_url = "http://192.168.245.35:30051/api/v1"
+
+[load]
+clock_seconds_per_second = 0
+matrix_size = 50
+is_generate_matrix = true
+rps_per_users = [ 8,]
+run_time = "45s"
+users = 50
+expect_workers = 50
+processes = 2
+spawn_rate = 2
+rps_per_user = 8
+
+[metadata]
+bts_unix = 1711665678
