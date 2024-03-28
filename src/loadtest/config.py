@@ -36,9 +36,9 @@ class Config:
     def to_locust_args(self, rps_per_user: int = 0) -> List[str]:
         a = []
         
-        a.append('--autostart')    
-        a.extend(['--locustfile', self.c['cli']['locustfile']])
+        a.append('--autostart')
         a.extend(['--autoquit', 1])
+        a.extend(['--locustfile', self.c['cli']['locustfile']])
         a.extend(['--host', 'http://localhost'])
         a.extend(['--users', self.c['load']['users']])
         
