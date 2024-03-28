@@ -24,6 +24,7 @@ from src.domain import format
 from . import __version__
 from .cloudlet_deployment import sinfonia_deploy, CloudletDeployment
 from .local_deployment import sinfonia_runapp
+from .geolocation import GeoLocation
 
 
 APP_NAME_TO_UUID = {
@@ -36,6 +37,10 @@ UUID_TO_APP_NAME = {
     "00000000-0000-0000-0000-000000000111": "loadtest",
     "00000000-0000-0000-0000-000000000000": "helloworld",
 }
+
+
+# Amherst, MA
+CLIENT_GEOLOCATION = GeoLocation(lat=42.340382, long=-72.496819)
 
 
 cli = typer.Typer()
@@ -111,13 +116,13 @@ def print_deployment_status(
 @cli.command()
 def sinfonia_tier3_loadtest(
         tier1_url: str = typer.Option("http://192.168.245.31:5000"),
+        dry_run: bool = typer.Option(False),
         application_uuid: str = typer.Option("loadtest"),
         application: str = typer.Option("/bin/bash"),
         loadtest_config_path: str = typer.Option("src/sinfonia_tier3_loadtest/.cli.toml"),
         T: int = typer.Option(5, help="Number of samples"),
         config_debug: bool = typer.Option(False),
         debug: bool = typer.Option(False),
-        zeroconf: bool = typer.Option(False),
 ) -> int:
     try:
         application_uuid = UUID(application_uuid)
@@ -137,7 +142,12 @@ def sinfonia_tier3_loadtest(
         # Request one or more backend deployments
         try:
             print("Deploying... ")
-            deployments = sinfonia_deploy(URL(tier1_url), application_uuid, debug, zeroconf)
+            deployments = sinfonia_deploy(
+                tier1_url=URL(tier1_url), 
+                geoloc=CLIENT_GEOLOCATION, 
+                application_uuid=application_uuid, 
+                debug=debug
+                )
             print("Done!")
         except ConnectionError:
             print("failed to connect to sinfonia-tier1/-tier2")
@@ -161,7 +171,10 @@ def sinfonia_tier3_loadtest(
         # This is to wait for loadtest app to completely terminate
         # Not ideal (and can bug), but this seems to work for now
         if t != 0:
-            time.sleep(45)
+            time.sleep(10)
+            
+        if dry_run:
+            continue
         
         try:
             with format.str.ForeCyan():

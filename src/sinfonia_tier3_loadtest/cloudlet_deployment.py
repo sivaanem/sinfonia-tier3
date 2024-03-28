@@ -28,6 +28,7 @@ from wireguard_tools import WireguardConfig, WireguardKey
 from yarl import URL
 
 from .key_cache import KeyCacheEntry
+from .geolocation import GeoLocation
 
 
 @define
@@ -94,14 +95,13 @@ class WireguardKeyFormatter:
 
 
 def sinfonia_deploy(
-    tier1_url: URL, application_uuid: UUID, debug: bool = False, zeroconf: bool = False
+        tier1_url: URL, 
+        geoloc: GeoLocation,
+        application_uuid: UUID,
+        debug: bool = False, 
 ) -> list[CloudletDeployment]:
     """Request a backend (re)deployment from the orchestrator"""
     deploy_base = tier1_url
-    if zeroconf:
-        raise NotImplementedError("Zeroconf functionality is still unfinished")
-        # - perform MDNS lookup for "cloudlet._sinfonia._tcp.local."
-        # override tier1_url and pass original tier1_url as a request header
 
     deployment_keys = KeyCacheEntry.load(application_uuid)
     deployment_url = (
@@ -110,12 +110,16 @@ def sinfonia_deploy(
         / str(application_uuid)
         / deployment_keys.public_key.urlsafe
     )
+    deployment_header = {
+        "ClientLatitude": str(geoloc.lat),
+        "ClientLongitude": str(geoloc.long)
+    }
 
     if debug:
         print("[debug] deployment_url:", deployment_url)
 
     # fire off deployment request
-    response = requests.post(str(deployment_url))
+    response = requests.post(str(deployment_url), headers=deployment_header)
     response.raise_for_status()
 
     # load openapi specification to validate the response
