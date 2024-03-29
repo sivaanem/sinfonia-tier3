@@ -9,15 +9,15 @@
 #
 
 from __future__ import annotations
+from typing import Optional
 
 import time
 import argparse
-from io import StringIO
-from typing import Sequence
 from uuid import UUID
+from enum import IntEnum
 
 import typer
-from requests.exceptions import HTTPError
+from requests.exceptions import HTTPError, ConnectionError
 from yarl import URL
 
 from src.domain import format
@@ -25,18 +25,7 @@ from . import __version__
 from .cloudlet_deployment import sinfonia_deploy, CloudletDeployment
 from .local_deployment import sinfonia_runapp
 from .geolocation import GeoLocation
-
-
-APP_NAME_TO_UUID = {
-    "helloworld": "00000000-0000-0000-0000-000000000000",
-    "loadtest": "00000000-0000-0000-0000-000000000111"
-}
-
-
-UUID_TO_APP_NAME = {
-    "00000000-0000-0000-0000-000000000111": "loadtest",
-    "00000000-0000-0000-0000-000000000000": "helloworld",
-}
+from .app_name import uuid_to_app_name, app_name_to_uuid
 
 
 # Amherst, MA
@@ -46,50 +35,39 @@ CLIENT_GEOLOCATION = GeoLocation(lat=42.340382, long=-72.496819)
 cli = typer.Typer()
 
 
-def app_name_to_uuid(value: str) -> UUID:
-    uuid = APP_NAME_TO_UUID.get(value, value)
-    return UUID(uuid)
+class DeploymentStatus(IntEnum):
+    DEPLOYED = 0
+    TIMEOUT = 1
+    HTTP_ERROR = 2
+    FAILED = 3
+    
+    
+def deployment_status_repr(s: DeploymentStatus):
+    r = format.str.bold(s.name)
+    if s == DeploymentStatus.DEPLOYED:
+        return format.str.green(r)
+    return format.str.red(r)
 
 
-def uuid_to_app_name(uuid: str | UUID) -> str:
-    return UUID_TO_APP_NAME[str(uuid)]
-
-
-def parse_args(args: list[str] | None = None) -> argparse.Namespace:
-    """parse those args"""
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--config-debug",
-        action="store_true",
-        help="Create wireguard and resolv config in current directory",
-    )
-    parser.add_argument(
-        "--debug", action="store_true", help="Extra logging for debugging"
-    )
-    parser.add_argument(
-        "--version", action="version", version=f"%(prog)s {__version__}"
-    )
-    parser.add_argument(
-        "--qrcode",
-        choices=["compact", "alt"],
-        help="Generate QR code for wireguard-android",
-    )
-    parser.add_argument(
-        "--zeroconf",
-        action="store_true",
-        help="Try to discover local Tier2 through MDNS",
-    )
-    parser.add_argument("tier1_url", metavar="tier1-url", type=URL)
-    parser.add_argument("application_uuid", metavar="application-uuid", type=app_name_to_uuid)
-    parser.add_argument("application", nargs=argparse.REMAINDER)
-    return parser.parse_args(args)
+def highlight_repr(s: str) -> str:
+    return format.str.bold(format.str.magenta(s))
 
 
 def print_deployment_status(
         application_uuid: UUID,
         deployments: list[CloudletDeployment], 
-        connected_deployment: CloudletDeployment
-):
+        connected_deployment: CloudletDeployment,
+        deployment_status: DeploymentStatus,
+        error_log: Optional[str] = None
+):            
+    print()
+    print("DEPLOYMENT STATUS:")
+    print(f"  * Connection status: {deployment_status_repr(deployment_status)}")
+    
+    if error_log is not None:
+        print(f"  * Log: {format.str.red(error_log)}")
+        return
+    
     deployment_hosts = []
     for d in deployments:
         for _, v in d.tunnel_config.peers.items():
@@ -97,20 +75,20 @@ def print_deployment_status(
             
     connected_deployment_peers_data = list(connected_deployment.tunnel_config.peers.values())
     connected_deployment_host = str(connected_deployment_peers_data[0].endpoint_host)
+    app_key = connected_deployment.application_key
+    deploy_name = connected_deployment.deployment_name
     
-    status_repr = format.str.bold(format.str.green(connected_deployment.status))
-    connected_deployment_host_repr = format.str.bold(format.str.magenta(connected_deployment_host))
-            
-    print()
-    print("DEPLOYMENT STATUS")
     print(f"  * Deployed app: {application_uuid} ({uuid_to_app_name(application_uuid)})")
     print(f"  * Deployment size: {len(deployments)}")
     print(f"  * Deployment hosts: {deployment_hosts}")
-    print(f"  * Connection status: {status_repr}")
-    print(f"  * Connected host IP: {connected_deployment_host_repr}")
-    print(f"  * Application key: {connected_deployment.application_key}")
-    print(f"  * Deployment name: {connected_deployment.deployment_name}")
+    print(f"  * Connected host IP: {highlight_repr(connected_deployment_host)}")
+    print(f"  * Application key: {app_key}")
+    print(f"  * Deployment name: {deploy_name}")
     print()
+    
+    
+def print_separator():
+    print("========================================")
 
 
 @cli.command()
@@ -130,16 +108,23 @@ def sinfonia_tier3_loadtest(
         try:
             application_uuid = app_name_to_uuid(application_uuid)
         except Exception as e:
-            print(f"exception {e}")
+            print(f"app not supported")
             exit(1)
     
     for t in range(T):
         print()
+        print()
         print(f"STARTING SAMPLE T = {t+1} (of {T})")
-        print("========================================")
+        print_separator()
         print()
         
         # Request one or more backend deployments
+        
+        deployment_status = DeploymentStatus.DEPLOYED
+        deployment_data = None
+        deployments = None
+        error_log = None
+        
         try:
             print("Deploying... ")
             deployments = sinfonia_deploy(
@@ -150,28 +135,40 @@ def sinfonia_tier3_loadtest(
                 )
             print("Done!")
         except ConnectionError:
-            print("failed to connect to sinfonia-tier1/-tier2")
-            return 1
+            deployment_status = DeploymentStatus.TIMEOUT
+            error_log = "failed to connect to sinfonia-tier1"
         except HTTPError as e:
-            print(f'failed to deploy backend: "{e.response.text}"')
-            return 1
+            deployment_status = DeploymentStatus.HTTP_ERROR
+            error_log = f'failed to deploy backend: "{e.response.text}"'
+        except Exception as e:
+            deployment_status = DeploymentStatus.FAILED
+            error_log = f'failed with message: {str(e)}'
 
-        # Pick the best deployment (first returned for now...)    
-        deployment_data = deployments[0]
-        deployment_peers_data = list(deployment_data.tunnel_config.peers.values())
-        deployment_host = str(deployment_peers_data[0].endpoint_host)
-        # print(deployment_data.to_pretty_format())
+        # Pick the best deployment (first returned for now...)
+        if error_log is None:
+            deployment_data = deployments[0]
+            deployment_peers_data = list(deployment_data.tunnel_config.peers.values())
+            deployment_host = str(deployment_peers_data[0].endpoint_host)
         
         print_deployment_status(
-            application_uuid,
-            deployments,
-            deployment_data
+            application_uuid=application_uuid,
+            deployments=deployments,
+            deployment_status=deployment_status,
+            error_log=error_log,
+            connected_deployment=deployment_data,
         )
+        
+        if error_log:
+            continue
         
         # This is to wait for loadtest app to completely terminate
         # Not ideal (and can bug), but this seems to work for now
-        if t != 0:
-            time.sleep(10)
+        print()
+        print("10-second countdown before next test")
+        for i in range(10, 0, -1):
+            print(f"{i} ... ", end='', flush=True)
+            time.sleep(1)
+        print("Done!")
             
         if dry_run:
             continue
@@ -189,6 +186,12 @@ def sinfonia_tier3_loadtest(
         except Exception as e:
             print(f"exception: {e}")
             break
+    
+    print()    
+    print()
+    print("TEST RECAP")
+    print_separator()
+    print()
 
 
 if __name__ == '__main__':
