@@ -13,10 +13,10 @@ from yarl import URL
 import src.loadtest.daemon as daemon
 
 
-locust.stats.CONSOLE_STATS_INTERVAL_SEC = 2
+locust.stats.CSV_STATS_INTERVAL_SEC = 2
 
 
-_NUM_CONCURRENT_REQ = 50
+_NUM_CONCURRENT_REQ = 10
 _RPS_PER_USER: float = 0
 _CONFIG: Dict[str, Any] = dict()
 _TIER2_ROOT_URL: str = ""
@@ -70,7 +70,7 @@ def on_startup(environment, **kw):
     
 # @events.report_to_master.add_listener
 # def on_report_to_master(client_id, data):
-#     logging.info('Reporting to master runner ...')
+#     logging.info(f'Reporting to master runner ... {data}')
 #     pass
         
   
@@ -125,7 +125,8 @@ def on_startup(environment, **kw):
         
 # @events.worker_report.add_listener
 # def on_worker_report(client_id, data):
-#     pass
+#     import pprint
+#     pprint.pprint(data)
         
         
 def init_resources():

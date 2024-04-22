@@ -29,7 +29,10 @@ from .app_name import uuid_to_app_name, app_name_to_uuid
 
 
 # Amherst, MA
-CLIENT_GEOLOCATION = GeoLocation(lat=42.340382, long=-72.496819)
+# CLIENT_GEOLOCATION = GeoLocation(lat=42.340382, long=-72.496819)
+
+# Jacksonville, FL
+CLIENT_GEOLOCATION = GeoLocation(lat=30.209041, long=-81.592600)
 
 
 cli = typer.Typer()
@@ -59,7 +62,7 @@ def print_deployment_status(
         connected_deployment: CloudletDeployment,
         deployment_status: DeploymentStatus,
         error_log: Optional[str] = None
-):            
+):
     print()
     print("DEPLOYMENT STATUS:")
     print(f"  * Connection status: {deployment_status_repr(deployment_status)}")
