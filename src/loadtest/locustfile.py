@@ -154,8 +154,8 @@ def on_worker_report(client_id, data):
         latency_buffer.append([
             start_ts,
             last_request_ts,
-            avg_latency,
-            p95
+            round(avg_latency, 2),
+            round(p95, 2)
         ])
     
 def write_latency_data(latency_csv_file):
@@ -172,6 +172,11 @@ def write_latency_data(latency_csv_file):
 def latency_report_job(c: daemon.carbon_report.CarbonReportConfig):
     fn = f"latency-report-{c.rps}rps-{c.matrix_size}msz.csv"
     fp = Path(c.report_root_path) / fn
+    with latency_buffer_lock:
+        with open(fp, 'a') as latency_csv_fp:
+            latency_csv_writer = csv.writer(latency_csv_fp)
+            latency_report_columns = ["StartTimestamp", "EndTimestamp", "AverageLatency", "Latency95%"]
+            latency_csv_writer.writerow(latency_report_columns)
     while True:
         write_latency_data(fp)
         time.sleep(c.report_per_second)
@@ -228,6 +233,7 @@ def start_daemons():
         )
     
     daemon.start(j, c)
+    
     
     t = threading.Thread(target=latency_report_job, args=[c], daemon=True)
     t.start()
